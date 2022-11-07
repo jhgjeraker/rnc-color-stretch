@@ -1,5 +1,5 @@
 # rnc-color-stretch
-My Python adaptation of `rnc-color-stretch`, an image stretching software originally written in [davinci](http://davinci.asu.edu/index.php?title=Main_Page) by [Roger N. Clark](https://clarkvision.com/articles/astrophotography.software/rnc-color-stretch/).
+My Python adaptation of `rnc-color-stretch`, an image stretching software written in [davinci](http://davinci.asu.edu/index.php?title=Main_Page) by [Roger N. Clark](https://clarkvision.com/articles/astrophotography.software/rnc-color-stretch/).
 
 ## Motivation
 My goal was to make this interesting piece of software more available through Python. It was also a nice excercise for me to learn about programmatical image processing. You can read more at https://gjeraker.com/content/projects/rnc-color-stretch.html.
