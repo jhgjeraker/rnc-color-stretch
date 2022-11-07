@@ -78,7 +78,8 @@ def parse_sysargs() -> argparse.Namespace:
     )
     parser.add_argument(
         '--s-curve',
-        action='store_true',
+        type=int,
+        default=0,
         help='s-curve application, '
         '0: no s-curve application, '
         '1: apply a s-curve stretch, '
