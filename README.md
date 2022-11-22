@@ -5,17 +5,20 @@ Python adaptation of `rnc-color-stretch`, an automatic image stretching tool use
 My goal was to make this interesting piece of software more available through Python. It was also a nice excercise for me to learn about programmatical image processing. You can read more at https://gjeraker.com/content/projects/rnc-color-stretch.html.
 
 ## Usage
- All code is contained in a single file and can be run by the following commands.
+Apply the stretch to a `.tiff` image by running the following script.
 
 ```
 python rnc_color_stretch.py <image>.tiff
 ```
 
-Configuration parameters can be seen by calling with the helper flag.
+Configuration parameters can be set by appending the desired helper flags.
 
 ```
 python rnc_color_stretch.py --help
 ```
+
+### Requirements
+The implementation has been developed and tested for Python 3.11.
 
 ## Copyright and Licence
 
