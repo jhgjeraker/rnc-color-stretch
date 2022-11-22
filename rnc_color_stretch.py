@@ -202,8 +202,27 @@ def parse_sysargs() -> argparse.Namespace:
     return args
 
 
-def histogram(img, ch):
-    return np.histogram(img[:, :, ch], range=(0, 65535), bins=65536)
+def histogram(img: np.ndarray, channel: int) -> tuple[np.ndarray, np.ndarray]:
+    """
+    Calculate the histogram for a single channel.
+
+    Parameters
+    ----------
+    img : np.ndarray
+        Image array of shape [x, y, 3].
+    channel : int
+        Channel for which the histogram is calculated.
+
+    Returns
+    -------
+    histogram : np.ndarray
+        Values for each bin in the created histogram.
+    bins : np.ndarray
+        Histogram bins in the specified range.
+
+    """
+
+    return np.histogram(img[:, :, channel], range=(0, 65535), bins=65536)
 
 
 def imshow(in_img: np.ndarray,
@@ -211,10 +230,29 @@ def imshow(in_img: np.ndarray,
            args: argparse.Namespace,
            flip: bool = True,
            ) -> None:
+    """
+    Helper function for plotting/writing an image + channel histograms.
+    Will plot and/or write to file depending on user configuration.
+
+    Parameters
+    ----------
+    in_img : np.ndarray
+        Image that is to be plotted/written.
+    name : str
+        Image name used in writefile and/or plot title.
+    args : argparse.Namespace
+        User-provided system arguments.
+    flip : bool
+        Whether or not to flip image axes.
+        Defaults to True.
+
+    """
+
     if not args.plot and not args.write_plot:
         return
 
-    # Swap x- and y- axis back to original state.
+    # Swap x- and y- axis back to original state to
+    # compensate for flipping them at initial read.
     if flip:
         img = np.swapaxes(in_img, 0, 1)
     else:
@@ -257,6 +295,21 @@ def env_setup(args: argparse.Namespace) -> None:
 
 
 def read_img(path: str) -> np.ndarray:
+    """
+    Read and pre-process image from provided path.
+
+    Parameters
+    ----------
+    path : str
+        Target image path.
+
+    Returns
+    -------
+    img : np.ndarray
+        Read and processed image array of shape [x, y, 3].
+
+    """
+
     # Line 357.
     #
     # Parameter `cv2.IMREAD_UNCHANGED` preserves 16-bit depth.
@@ -305,6 +358,21 @@ def read_img(path: str) -> np.ndarray:
 
 
 def format_and_scale(img: np.ndarray) -> np.ndarray:
+    """
+    Depending on the input image parameters, scale and/or change the
+    image format to achieve proper base values for further processing.
+
+    If a permutation of filetype, range, or scale is not supported, this
+    is likely where we need to add more configurations.
+
+    Parameters
+    img : np.ndarray
+        Image of shape [x, y, 3] to be scaled.
+    img : np.ndarray
+        Scaled and/or formatted image array of shape [x, y, 3].
+
+    """
+
     # Line 406.
     if np.max(img) < 1.00001 and np.issubdtype(img.dtype, np.floating):
         print('- Scaling float data by 65535 to 16-bit range.')
@@ -346,7 +414,24 @@ def format_and_scale(img: np.ndarray) -> np.ndarray:
     return img
 
 
-def tone_curve(img):
+def tone_curve(img: np.ndarray) -> np.ndarray:
+    """
+    Apply a tone curve to the input image.
+    This can be useful for very dark images, but might lead
+    to overexposure if used where not necessary.
+
+    Parameters
+    ----------
+    img : np.ndarray
+        Image onto which the curve is applied.
+
+    Returns
+    -------
+    img : np.ndarray
+        Image after applying the tone curve.
+
+    """
+
     print('- Applying tone curve to input image.')
     b = 12.0
     c = 65535.0
@@ -361,11 +446,11 @@ def tone_curve(img):
 
 
 def smooth_and_subtract(in_img: np.ndarray,
-                        skylevelfactor,
-                        zerosky_r,
-                        zerosky_g,
-                        zerosky_b,
-                        ):
+                        skylevelfactor: float,
+                        zerosky_r: int,
+                        zerosky_g: int,
+                        zerosky_b: int,
+                        ) -> np.ndarray:
     # Smooth the histogram so we can find the darkest sky level
     # to subtract and find the sky histogram peak, which should be
     # close to the darkest deep space zero level.
@@ -512,7 +597,7 @@ def root_stretch(in_img: np.ndarray,
                  rootpower: int,
                  rootpower2: int,
                  rootiter: int,
-                 ):
+                 ) -> np.ndarray:
     # Line 1088
     #
     print('- Computing root stretch.')
@@ -549,7 +634,13 @@ def root_stretch(in_img: np.ndarray,
     return img
 
 
-def s_curve(in_img, scurve, skylevelfactor, zerosky_r, zerosky_g, zerosky_b):
+def s_curve(in_img: np.ndarray,
+            scurve: int,
+            skylevelfactor: float,
+            zerosky_r: int,
+            zerosky_g: int,
+            zerosky_b: int,
+            ) -> np.ndarray:
     print('- Computing s-curve stretch.')
     # Make a copy of the input image.
     img = np.ones(in_img.shape) * in_img
@@ -617,7 +708,11 @@ def s_curve(in_img, scurve, skylevelfactor, zerosky_r, zerosky_g, zerosky_b):
     return img_subtracted
 
 
-def setmin(in_img, setmin_r, setmin_g, setmin_b):
+def setmin(in_img: np.ndarray,
+           setmin_r: int,
+           setmin_g: int,
+           setmin_b: int,
+           ) -> np.ndarray:
     # This makes sure there are no really dark pixels, which typically happens
     # from noise or color matrix application (in the raw converter) around
     # stars showing chromatic aberration.
@@ -644,14 +739,14 @@ def setmin(in_img, setmin_r, setmin_g, setmin_b):
     return img
 
 
-def color_correct(in_img,
-                  in_img_original,
-                  colorenhance,
-                  zerosky_r,
-                  zerosky_g,
-                  zerosky_b,
-                  shape_x,
-                  shape_y,
+def color_correct(in_img: np.ndarray,
+                  in_img_original: np.ndarray,
+                  colorenhance: float,
+                  zerosky_r: int,
+                  zerosky_g: int,
+                  zerosky_b: int,
+                  shape_x: int,
+                  shape_y: int,
                   ):
     # Make a copy of input image.
     img = np.ones(in_img.shape) * in_img.astype(np.float64)
