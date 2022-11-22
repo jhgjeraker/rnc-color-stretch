@@ -460,7 +460,9 @@ def smooth_and_subtract(in_img: np.ndarray,
             print('  Channels: Red={}, blue={}, green={}'.format(
                 hist_r_sky_index, hist_g_sky_index, hist_b_sky_index,
             ))
-            print('  Not sure what to do with this image.')
+            print('')
+            print('  Image is likely too dark, but you can try again')
+            print('  while applying a tone curve (--tone-curve) first.')
             print('  Exiting...')
             sys.exit()
 
