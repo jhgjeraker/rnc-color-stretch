@@ -18,7 +18,7 @@ python rnc_color_stretch.py --help
 ```
 
 ### Requirements
-The implementation has been developed and tested for Python 3.11.
+Python versions 3.9, 3.10, and 3.11.
 
 ## Copyright and Licence
 
