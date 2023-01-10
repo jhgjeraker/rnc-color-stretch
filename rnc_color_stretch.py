@@ -275,6 +275,20 @@ def imshow(in_img: np.ndarray,
 
 
 def print_ch_moments(img: np.ndarray, header: str, indent: int = 0) -> None:
+    """
+    Print image minimum, maximum, and average value per channel.
+
+    Parameters
+    ----------
+    img : np.array
+        Image for which moments are printed.
+    header : str
+        Output prefix, usually name of current step.
+    indent : int
+        Number of spaces to indent the output.
+
+    """
+
     print(f'{indent*" "}- {header}\n')
     print(f'{indent*" "}  Channel       Min        Max       Mean')
     print(f'{indent*" "}  ---------------------------------------')
@@ -1018,6 +1032,18 @@ def post_process(img: np.ndarray) -> np.ndarray:
 
 
 def imwrite(img: np.ndarray, path: str) -> None:
+    """
+    Write image to file.
+
+    Parameters
+    ----------
+    img : np.ndarray
+        Image data to be written.
+    path : str
+        Where to write the image, including extension.
+
+    """
+
     # Convert image RGB -> BGR for opencv write.
     img_bgr = np.zeros(img.shape)
     img_bgr[:, :, 0] = img[:, :, 2]
