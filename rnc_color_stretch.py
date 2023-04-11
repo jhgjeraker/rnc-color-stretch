@@ -74,7 +74,7 @@ def parse_sysargs() -> argparse.Namespace:
     parser.add_argument(
         '--tone-curve',
         action='store_true',
-        help='apply a tone curve to da image',
+        help='apply a tone curve to the image',
     )
     parser.add_argument(
         '--s-curve',
