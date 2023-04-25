@@ -163,11 +163,9 @@ def parse_sysargs() -> argparse.Namespace:
         help='minimum for blue',
     )
     parser.add_argument(
-        '--colorcorrect',
-        type=bool,
-        default=True,
-        metavar='',
-        help='apply color correction to output image',
+        '--no-colorcorrection',
+        action='store_true',
+        help='disable color correction to output image',
     )
     parser.add_argument(
         '--colorenhance',
@@ -197,7 +195,7 @@ def parse_sysargs() -> argparse.Namespace:
     print(f'  Setmin Red:       {args.setmin_red}')
     print(f'  Setmin Green:     {args.setmin_green}')
     print(f'  Setmin Blue:      {args.setmin_blue}')
-    print(f'  Colorcorrect:     {args.colorcorrect}')
+    print(f'  Colorcorrect:     {not args.no_colorcorrection}')
     print(f'  Colorenchance:    {args.colorenhance}')
 
     return args
@@ -1135,7 +1133,7 @@ def main(args: argparse.Namespace) -> None:
 
     # Perform color correction on the output image.
     # Line 1951.
-    if args.colorcorrect:
+    if not args.no_colorcorrection:
         img = color_correct(
             img,
             img_subtracted,
