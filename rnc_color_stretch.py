@@ -166,6 +166,7 @@ def parse_sysargs() -> argparse.Namespace:
         '--colorcorrect',
         type=bool,
         default=True,
+        metavar='',
         help='apply color correction to output image',
     )
     parser.add_argument(
