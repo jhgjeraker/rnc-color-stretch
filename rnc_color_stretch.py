@@ -463,6 +463,7 @@ def smooth_and_subtract(in_img: np.ndarray,
                         zerosky_r: int,
                         zerosky_g: int,
                         zerosky_b: int,
+                        indent_level: int = 0,
                         ) -> np.ndarray:
     # Smooth the histogram so we can find the darkest sky level
     # to subtract and find the sky histogram peak, which should be
@@ -471,10 +472,14 @@ def smooth_and_subtract(in_img: np.ndarray,
     # Make a copy of the input image.
     img = np.ones(in_img.shape) * in_img
 
-    print('- Computing smoothed RGB histograms on image.')
+    # The function `smooth_and_subtract` might be called insider other
+    # functions where it would be appropriate to indent all output.
+    ni = '  ' * indent_level
+
+    print(f'{ni}- Computing smoothed RGB histograms on image.')
     # Do two passes on finding sky level.
     for i in range(2):
-        print(f'  - Pass {i+1}')
+        print(f'{ni}  - Pass {i+1}')
 
         hist_r, _ = histogram(img, 0)
         hist_g, _ = histogram(img, 1)
@@ -503,17 +508,17 @@ def smooth_and_subtract(in_img: np.ndarray,
         hist_g_sm_argmax = np.argmax(hist_g_sm[400:65500+1]) + 400
         hist_b_sm_argmax = np.argmax(hist_b_sm[400:65500+1]) + 400
 
-        print('    - Histogram peak.\n')
-        print('      Channel  Index      Value')
-        print('      -------------------------')
-        print('          Red  {:5d}  {:9.2f}'.format(
-            hist_r_sm_argmax, hist_r_sm[hist_r_sm_argmax],
+        print(f'{ni}    - Histogram peak.\n')
+        print(f'{ni}      Channel  Index      Value')
+        print(f'{ni}      -------------------------')
+        print('{}          Red  {:5d}  {:9.2f}'.format(
+            ni, hist_r_sm_argmax, hist_r_sm[hist_r_sm_argmax],
         ))
-        print('        Green  {:5d}  {:9.2f}'.format(
-            hist_g_sm_argmax, hist_g_sm[hist_g_sm_argmax],
+        print('{}        Green  {:5d}  {:9.2f}'.format(
+            ni, hist_g_sm_argmax, hist_g_sm[hist_g_sm_argmax],
         ))
-        print('         Blue  {:5d}  {:9.2f}'.format(
-            hist_b_sm_argmax, hist_b_sm[hist_b_sm_argmax],
+        print('{}         Blue  {:5d}  {:9.2f}'.format(
+            ni, hist_b_sm_argmax, hist_b_sm[hist_b_sm_argmax],
         ))
         print('')
 
@@ -554,24 +559,27 @@ def smooth_and_subtract(in_img: np.ndarray,
         if hist_r_sky_index == 0 or \
                 hist_g_sky_index == 0 or \
                 hist_b_sky_index == 0:
-            print(f'- Histogram sky level {skylevelfactor:.2f} not found.')
-            print('  Channels: Red={}, blue={}, green={}'.format(
-                hist_r_sky_index, hist_g_sky_index, hist_b_sky_index,
+            print(f'{ni}- Histogram sky level {skylevelfactor:.2f} not found.')
+            print('{}  Channels: Red={}, blue={}, green={}'.format(
+                ni, hist_r_sky_index, hist_g_sky_index, hist_b_sky_index,
             ))
             print('')
-            print('  Image is likely too dark, but you can try again')
-            print('  while applying a tone curve (--tone-curve) first.')
-            print('  Exiting...')
+            print(f'{ni}  Image is likely too dark. but you can try again')
+            print(f'{ni}  Suggestions:')
+            print(f'{ni}    - Add a --tone-curve.')
+            print(f'{ni}    - Reduce --s-curve intensity.')
+            print(f'{ni}    - Fewer --rootiter or smaller --rootpower2.')
+            print(f'{ni}  Exiting...')
             sys.exit()
 
         # Line 882
-        print('    - Histogram dark sky level, '
+        print(f'{ni}    - Histogram dark sky level, '
               f'{skylevelfactor*100:.2f}% of max.\n')
-        print('      Channel  Index     Value')
-        print('      ------------------------')
-        print(f'          Red  {hist_r_sky_index:5d} {hist_r_sky:9.2f}')
-        print(f'        Green  {hist_g_sky_index:5d} {hist_g_sky:9.2f}')
-        print(f'         Blue  {hist_b_sky_index:5d} {hist_b_sky:9.2f}')
+        print(f'{ni}      Channel  Index     Value')
+        print(f'{ni}      ------------------------')
+        print(f'{ni}          Red  {hist_r_sky_index:5d} {hist_r_sky:9.2f}')
+        print(f'{ni}        Green  {hist_g_sky_index:5d} {hist_g_sky:9.2f}')
+        print(f'{ni}         Blue  {hist_b_sky_index:5d} {hist_b_sky:9.2f}')
         print('')
 
         # Line 924
@@ -580,12 +588,12 @@ def smooth_and_subtract(in_img: np.ndarray,
         hist_g_sky_sub = hist_g_sky_index - zerosky_g
         hist_b_sky_sub = hist_b_sky_index - zerosky_b
 
-        print('    - Subtracted channels to align sky reference.\n')
-        print('        Channel   Subtract     Ref')
-        print('        --------------------------')
-        print(f'            Red     {hist_r_sky_sub:6d}  {zerosky_r:6d}')
-        print(f'          Green     {hist_g_sky_sub:6d}  {zerosky_g:6d}')
-        print(f'           Blue     {hist_b_sky_sub:6d}  {zerosky_b:6d}')
+        print(f'{ni}    - Subtracted channels to align sky reference.\n')
+        print(f'{ni}        Channel   Subtract     Ref')
+        print(f'{ni}        --------------------------')
+        print(f'{ni}            Red     {hist_r_sky_sub:6d}  {zerosky_r:6d}')
+        print(f'{ni}          Green     {hist_g_sky_sub:6d}  {zerosky_g:6d}')
+        print(f'{ni}           Blue     {hist_b_sky_sub:6d}  {zerosky_b:6d}')
         print('')
 
         rgb_sky_sub_r = hist_r_sky_index - zerosky_r
@@ -618,31 +626,44 @@ def root_stretch(in_img: np.ndarray,
     # Make a copy of the input image.
     img = np.ones(in_img.shape) * in_img
 
-    # Exponent to power stretch.
-    x = 1 / rootpower
-
     for i in range(rootiter):
-        if i == 1:
+        if i == 0:
+            # Exponent to power stretch.
+            x = 1 / rootpower
+
+        else:
             # Exponent to power stretch for iteration 2.
             x = 1 / rootpower2
 
         print(f'  - Iteration {i+1} of {rootiter}.')
 
-    b = img + 1.0
-    b = b / 65536
-    b = 65535 * b**x
+        b = img + 1.0
+        b = b / 65536
+        b = 65535 * b**x
 
-    # We are going to make the minimum 4096 out of 65535.
-    b_min = int(np.min(b))
-    b_min_z = max([b_min - 4095, 0])
+        # We are going to make the minimum 4096 out of 65535.
+        b_min = int(np.min(b))
+        b_min_z = max([b_min - 4095, 0])
 
-    # Subtract the min, b_min_z, and rescale to max.
-    print(f'  - Subtracting {b_min_z:8.2f} from root stretched image.')
-    b = b - b_min_z
-    b = b / (65535 - b_min_z)
-    img = 65535 * b
+        # Subtract the min, b_min_z, and rescale to max.
+        print(f'  - Subtracting {b_min_z:8.2f} from root stretched image.')
+        b = b - b_min_z
+        b = b / (65535 - b_min_z)
+        img = 65535 * b
 
-    print_ch_moments(img, 'Image stats after root stretch and subtract.', 2)
+        print_ch_moments(
+            img, 'Image stats after root stretch and subtract.', 2)
+
+        # Sky level subtraction on root stretched image.
+        # Line 1206.
+        img = smooth_and_subtract(
+            in_img=img,
+            skylevelfactor=args.skylevelfactor,
+            zerosky_r=args.zerosky_red,
+            zerosky_g=args.zerosky_green,
+            zerosky_b=args.zerosky_blue,
+            indent_level=1,
+        )
 
     return img
 
@@ -892,7 +913,7 @@ def color_correct(in_img: np.ndarray,
     print(
         '  - Color correction intensity range factor.\n'
         '    Image stats: min={:.2f}, max={:.2f}, mean={:.2f}.'.format(
-             np.min(cavgn), np.max(cavgn), np.mean(cavgn),
+            np.min(cavgn), np.max(cavgn), np.mean(cavgn),
         )
     )
 
@@ -1096,17 +1117,6 @@ def main(args: argparse.Namespace) -> None:
     )
     imshow(img, '03-root-stretch', args)
 
-    # Sky level subtraction on root stretched image.
-    # Line 1206.
-    img = smooth_and_subtract(
-        in_img=img,
-        skylevelfactor=args.skylevelfactor,
-        zerosky_r=args.zerosky_red,
-        zerosky_g=args.zerosky_green,
-        zerosky_b=args.zerosky_blue,
-    )
-    imshow(img, '04-sky-subtraction', args)
-
     # Apply a s-curve to improve contrast.
     # Line 1529.
     if args.s_curve:
@@ -1118,7 +1128,7 @@ def main(args: argparse.Namespace) -> None:
             zerosky_g=args.zerosky_green,
             zerosky_b=args.zerosky_blue,
         )
-        imshow(img, '05-s-curve', args)
+        imshow(img, '04-s-curve', args)
 
     # Remove really dark pixels by adjusting for minimum.
     # Line 1919.
@@ -1129,7 +1139,7 @@ def main(args: argparse.Namespace) -> None:
             args.setmin_green,
             args.setmin_blue,
         )
-        imshow(img, '06-setmin-01', args)
+        imshow(img, '05-setmin-01', args)
 
     # Perform color correction on the output image.
     # Line 1951.
@@ -1144,7 +1154,7 @@ def main(args: argparse.Namespace) -> None:
             shape_x=img.shape[0],
             shape_y=img.shape[1],
         )
-        imshow(img, '07-color-correction', args)
+        imshow(img, '06-color-correction', args)
 
     # Remove really dark pixels (again) by adjusting for minimum.
     # Line 2263.
@@ -1155,12 +1165,12 @@ def main(args: argparse.Namespace) -> None:
             args.setmin_green,
             args.setmin_blue,
         )
-        imshow(img, '08-setmin-02', args)
+        imshow(img, '07-setmin-02', args)
 
     # Perform some post-processing on the final image.
     # Line 2688.
     img = post_process(img)
-    imshow(img, '09-post-processing', args, flip=False)
+    imshow(img, '08-post-processing', args, flip=False)
 
     # Write output image to file.
     imwrite(img, os.path.join(args.output_dir, 'stretched.tif'))
