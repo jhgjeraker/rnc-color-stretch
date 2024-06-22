@@ -169,8 +169,8 @@ def parse_sysargs() -> argparse.Namespace:
     )
     parser.add_argument(
         '--colorenhance',
-        type=int,
-        default=1,
+        type=float,
+        default=1.0,
         metavar='',
         help='color enhancement value',
     )
