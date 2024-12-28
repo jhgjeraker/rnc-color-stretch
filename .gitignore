@@ -129,4 +129,6 @@ dmypy.json
 .pyre/
 
 # Project test-files.
-_output/
+rnc-color-stretch.dv
+data/
+testbench.ipynb

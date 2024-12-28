@@ -35,168 +35,168 @@
 # Notations on the form `Line #` indicated the starting position
 # of the related logic in the original davinci implementation.
 
+import argparse
 import os
 import sys
-import argparse
 
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def parse_sysargs() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        prog='main.py',
+        prog="main.py",
     )
 
     parser.add_argument(
-        'image',
+        "image",
         type=str,
-        help='path to target image',
+        help="path to target image",
     )
     parser.add_argument(
-        '--output-dir',
+        "--output-dir",
         type=str,
-        default='_output',
-        metavar='',
-        help='directory into which files are written',
+        default="_output",
+        metavar="",
+        help="directory into which files are written",
     )
     parser.add_argument(
-        '--plot',
-        action='store_true',
-        help='visualize each step in order',
+        "--plot",
+        action="store_true",
+        help="visualize each step in order",
     )
     parser.add_argument(
-        '--write-plot',
-        action='store_true',
-        help='write each visualization to file',
+        "--write-plot",
+        action="store_true",
+        help="write each visualization to file",
     )
     parser.add_argument(
-        '--tone-curve',
-        action='store_true',
-        help='apply a tone curve to the image',
+        "--tone-curve",
+        action="store_true",
+        help="apply a tone curve to the image",
     )
     parser.add_argument(
-        '--s-curve',
+        "--s-curve",
         type=int,
         default=0,
-        help='s-curve application, '
-        '0: no s-curve application, '
-        '1: apply a s-curve stretch, '
-        '2: apply a stronger s-curve stretch, '
-        '3: apply s-curve 1 then 2, '
-        '4: apply s-curve 2 then 1',
+        help="s-curve application, "
+        "0: no s-curve application, "
+        "1: apply a s-curve stretch, "
+        "2: apply a stronger s-curve stretch, "
+        "3: apply s-curve 1 then 2, "
+        "4: apply s-curve 2 then 1",
     )
     parser.add_argument(
-        '--skylevelfactor',
+        "--skylevelfactor",
         type=float,
         default=0.06,
-        metavar='',
-        help='sky level relative to the histogram peak',
+        metavar="",
+        help="sky level relative to the histogram peak",
     )
     parser.add_argument(
-        '--zerosky-red',
+        "--zerosky-red",
         type=int,
         default=4096,
-        metavar='',
-        help='desired zero point on sky, red channel'
+        metavar="",
+        help="desired zero point on sky, red channel",
     )
     parser.add_argument(
-        '--zerosky-green',
+        "--zerosky-green",
         type=int,
         default=4096,
-        metavar='',
-        help='desired zero point on sky, green channel'
+        metavar="",
+        help="desired zero point on sky, green channel",
     )
     parser.add_argument(
-        '--zerosky-blue',
+        "--zerosky-blue",
         type=int,
         default=4096,
-        metavar='',
-        help='desired zero point on sky, blue channel'
+        metavar="",
+        help="desired zero point on sky, blue channel",
     )
     parser.add_argument(
-        '--rootpower',
+        "--rootpower",
         type=int,
         default=6,
-        metavar='',
-        help='power factor 1/rootpower',
+        metavar="",
+        help="power factor 1/rootpower",
     )
     parser.add_argument(
-        '--rootpower2',
+        "--rootpower2",
         type=int,
         default=1,
-        metavar='',
-        help='user if rootiter == 2 and rootpower2 > 1',
+        metavar="",
+        help="user if rootiter == 2 and rootpower2 > 1",
     )
     parser.add_argument(
-        '--rootiter',
+        "--rootiter",
         type=int,
         default=1,
-        metavar='',
-        help='iterations for applying rootpower - sky',
+        metavar="",
+        help="iterations for applying rootpower - sky",
     )
     parser.add_argument(
-        '--setmin',
-        action='store_true',
-        help='modification for minimum',
+        "--setmin",
+        action="store_true",
+        help="modification for minimum",
     )
     parser.add_argument(
-        '--setmin-red',
+        "--setmin-red",
         type=int,
         default=0,
-        metavar='',
-        help='minimum for red',
+        metavar="",
+        help="minimum for red",
     )
     parser.add_argument(
-        '--setmin-green',
+        "--setmin-green",
         type=int,
         default=0,
-        metavar='',
-        help='minimum for green',
+        metavar="",
+        help="minimum for green",
     )
     parser.add_argument(
-        '--setmin-blue',
+        "--setmin-blue",
         type=int,
         default=0,
-        metavar='',
-        help='minimum for blue',
+        metavar="",
+        help="minimum for blue",
     )
     parser.add_argument(
-        '--no-colorcorrection',
-        action='store_true',
-        help='disable color correction to output image',
+        "--no-colorcorrection",
+        action="store_true",
+        help="disable color correction to output image",
     )
     parser.add_argument(
-        '--colorenhance',
+        "--colorenhance",
         type=float,
         default=1.0,
-        metavar='',
-        help='color enhancement value',
+        metavar="",
+        help="color enhancement value",
     )
 
     args = parser.parse_args()
 
-    print('- All parameters:')
-    print(f'  Input file:       {args.image}')
-    print(f'  Output directory: {args.output_dir}/')
-    print(f'  Plot:             {args.plot}')
-    print(f'  Write Plot:       {args.write_plot}')
-    print(f'  Tone Curve:       {args.tone_curve}')
-    print(f'  S-Curve:          {args.s_curve}')
-    print(f'  Skylevelfactor:   {args.skylevelfactor}')
-    print(f'  Zerosky Red:      {args.zerosky_red}')
-    print(f'  Zerosky Green:    {args.zerosky_green}')
-    print(f'  Zerosky Blue:     {args.zerosky_blue}')
-    print(f'  Rootpower:        {args.rootpower}')
-    print(f'  Rootpower2:       {args.rootpower2}')
-    print(f'  Rootiter:         {args.rootiter}')
-    print(f'  Setmin:           {args.setmin}')
-    print(f'  Setmin Red:       {args.setmin_red}')
-    print(f'  Setmin Green:     {args.setmin_green}')
-    print(f'  Setmin Blue:      {args.setmin_blue}')
-    print(f'  Colorcorrect:     {not args.no_colorcorrection}')
-    print(f'  Colorenchance:    {args.colorenhance}')
+    print("- All parameters:")
+    print(f"  Input file:       {args.image}")
+    print(f"  Output directory: {args.output_dir}/")
+    print(f"  Plot:             {args.plot}")
+    print(f"  Write Plot:       {args.write_plot}")
+    print(f"  Tone Curve:       {args.tone_curve}")
+    print(f"  S-Curve:          {args.s_curve}")
+    print(f"  Skylevelfactor:   {args.skylevelfactor}")
+    print(f"  Zerosky Red:      {args.zerosky_red}")
+    print(f"  Zerosky Green:    {args.zerosky_green}")
+    print(f"  Zerosky Blue:     {args.zerosky_blue}")
+    print(f"  Rootpower:        {args.rootpower}")
+    print(f"  Rootpower2:       {args.rootpower2}")
+    print(f"  Rootiter:         {args.rootiter}")
+    print(f"  Setmin:           {args.setmin}")
+    print(f"  Setmin Red:       {args.setmin_red}")
+    print(f"  Setmin Green:     {args.setmin_green}")
+    print(f"  Setmin Blue:      {args.setmin_blue}")
+    print(f"  Colorcorrect:     {not args.no_colorcorrection}")
+    print(f"  Colorenchance:    {args.colorenhance}")
 
     return args
 
@@ -224,11 +224,12 @@ def histogram(img: np.ndarray, channel: int) -> tuple[np.ndarray, np.ndarray]:
     return np.histogram(img[:, :, channel], range=(0, 65535), bins=65536)
 
 
-def imshow(in_img: np.ndarray,
-           name: str,
-           args: argparse.Namespace,
-           flip: bool = True,
-           ) -> None:
+def imshow(
+    in_img: np.ndarray,
+    name: str,
+    args: argparse.Namespace,
+    flip: bool = True,
+) -> None:
     """
     Helper function for plotting/writing an image + channel histograms.
     Will plot and/or write to file depending on user configuration.
@@ -260,7 +261,7 @@ def imshow(in_img: np.ndarray,
     _, ax = plt.subplots(1, 2, figsize=(24, 8))
     ax[0].imshow((img - np.min(img)) / (np.max(img) - np.min(img)))
 
-    for ch, color in enumerate(['red', 'green', 'blue']):
+    for ch, color in enumerate(["red", "green", "blue"]):
         hist, bins = histogram(img, ch)
         ax[1].plot(bins[:-1], hist, color=color)
 
@@ -270,7 +271,7 @@ def imshow(in_img: np.ndarray,
     if args.plot:
         plt.show()
     if args.write_plot:
-        plt.savefig(f'{args.output_dir}/{name}.jpg')
+        plt.savefig(f"{args.output_dir}/{name}.jpg")
 
 
 def print_ch_moments(img: np.ndarray, header: str, indent: int = 0) -> None:
@@ -291,14 +292,16 @@ def print_ch_moments(img: np.ndarray, header: str, indent: int = 0) -> None:
     print(f'{indent*" "}- {header}\n')
     print(f'{indent*" "}  Channel       Min        Max       Mean')
     print(f'{indent*" "}  ---------------------------------------')
-    for ch, color in enumerate(['Red', 'Green', 'Blue']):
-        print('{}  {:6s}  {:9.2f}  {:9.2f}  {:9.2f}'.format(
-            indent*" ",
-            color,
-            np.min(img[:, :, ch]),
-            np.max(img[:, :, ch]),
-            np.mean(img[:, :, ch]),
-        ))
+    for ch, color in enumerate(["Red", "Green", "Blue"]):
+        print(
+            "{}  {:6s}  {:9.2f}  {:9.2f}  {:9.2f}".format(
+                indent * " ",
+                color,
+                np.min(img[:, :, ch]),
+                np.max(img[:, :, ch]),
+                np.mean(img[:, :, ch]),
+            )
+        )
     print()
 
 
@@ -331,10 +334,10 @@ def read_img(path: str) -> np.ndarray:
     # Sanity check for number of channels.
     # Only accept 3 channels.
     if img_bgr.shape[2] != 3:
-        print('- ERROR')
-        print('  Input image is not a 3 channel image.')
-        print('  Number of channels found: {}'.format(img_bgr.shape[2]))
-        print('  Exiting...')
+        print("- ERROR")
+        print("  Input image is not a 3 channel image.")
+        print("  Number of channels found: {}".format(img_bgr.shape[2]))
+        print("  Exiting...")
         sys.exit()
 
     # Opencv imread() return the color channels in reverse order.
@@ -347,9 +350,13 @@ def read_img(path: str) -> np.ndarray:
     img[:, :, 1] = img_bgr[:, :, 1]
     img[:, :, 2] = img_bgr[:, :, 0]
 
-    print('- input image dimensions: {:d} {:d} {:d}'.format(
-        img.shape[0], img.shape[1], img.shape[2],
-    ))
+    print(
+        "- input image dimensions: {:d} {:d} {:d}".format(
+            img.shape[0],
+            img.shape[1],
+            img.shape[2],
+        )
+    )
 
     # Images are usually represented with the x-axis from left-to-right
     # and with the y-axis from top-to-bottom.
@@ -362,10 +369,10 @@ def read_img(path: str) -> np.ndarray:
     # We must, of course, remember to flip it back before output.
     img = np.swapaxes(img, 0, 1)
 
-    print(f'\n- Image of type {img.dtype}:')
-    print(f'  - Min:  {np.min(img):8.2f}')
-    print(f'  - Max:  {np.max(img):8.2f}')
-    print(f'  - Mean: {np.mean(img):8.2f}')
+    print(f"\n- Image of type {img.dtype}:")
+    print(f"  - Min:  {np.min(img):8.2f}")
+    print(f"  - Max:  {np.max(img):8.2f}")
+    print(f"  - Mean: {np.mean(img):8.2f}")
 
     return img
 
@@ -388,42 +395,46 @@ def format_and_scale(img: np.ndarray) -> np.ndarray:
 
     # Line 406.
     if np.max(img) < 1.00001 and np.issubdtype(img.dtype, np.floating):
-        print('- Scaling float data by 65535 to 16-bit range.')
+        print("- Scaling float data by 65535 to 16-bit range.")
         img = img * 65535
 
     elif np.max(img) >= 1.00001 and np.issubdtype(img.dtype, np.floating):
-        print('- Scaling float data so that max is 65000.')
+        print("- Scaling float data so that max is 65000.")
         img = img * (65000 / np.max(img))
 
     elif np.max(img) > 8000 and np.issubdtype(img.dtype, np.integer):
-        print('- Image integers have good data range.')
+        print("- Image integers have good data range.")
 
     elif img.dtype == np.int16 and np.max(img) > 16000 and np.max(img) < 32768:
         ascale = 65000 / np.max(img)
         img = img * ascale
-        print('- Image integers are signed 16-bit range.')
-        print(f'  Scaling by factor {ascale:.2f}.')
+        print("- Image integers are signed 16-bit range.")
+        print(f"  Scaling by factor {ascale:.2f}.")
         if np.min(img) < 0:
-            print('  Negative pixels will be truncated to 0.')
-            print(f'  Number of negative pixels found: {len(img[img < 0])}')
+            print("  Negative pixels will be truncated to 0.")
+            print(f"  Number of negative pixels found: {len(img[img < 0])}")
             img[img < 0] = 0
 
     elif img.dtype == np.int16 and np.max(img) < 16000:
-        print('- Image integers are signed 16-bit range.')
-        print(f'  Maximum value {np.max(img):.2f} < 16000 seems too low.')
-        print('  Exiting...')
+        print("- Image integers are signed 16-bit range.")
+        print(f"  Maximum value {np.max(img):.2f} < 16000 seems too low.")
+        print("  Exiting...")
 
-    elif np.max(img) <= 8000 and np.dtype in [np.int16, np.uint16,
-                                              np.int32, np.uint32]:
-        print(f'- Integer max value {np.max(img)} should be > 8000.')
-        print('   Exiting.')
+    elif np.max(img) <= 8000 and np.dtype in [
+        np.int16,
+        np.uint16,
+        np.int32,
+        np.uint32,
+    ]:
+        print(f"- Integer max value {np.max(img)} should be > 8000.")
+        print("   Exiting.")
 
     else:
-        print(f'- Unimplemented data type {img.dtype}.')
-        print('  Convert the image to 16-bit tif.')
-        print('  Exiting...')
+        print(f"- Unimplemented data type {img.dtype}.")
+        print("  Convert the image to 16-bit tif.")
+        print("  Exiting...")
 
-    print('')
+    print("")
     return img
 
 
@@ -445,26 +456,27 @@ def tone_curve(img: np.ndarray) -> np.ndarray:
 
     """
 
-    print('- Applying tone curve to input image.')
+    print("- Applying tone curve to input image.")
     b = 12.0
     c = 65535.0
     d = 12.0
-    img_tone_curve = img * b * ((1.0 / d)**((img/c)**(0.4)))
+    img_tone_curve = img * b * ((1.0 / d) ** ((img / c) ** (0.4)))
     print_ch_moments(
         img=img_tone_curve,
-        header='Input image after application of tone curve.',
+        header="Input image after application of tone curve.",
     )
 
     return img_tone_curve
 
 
-def smooth_and_subtract(in_img: np.ndarray,
-                        skylevelfactor: float,
-                        zerosky_r: int,
-                        zerosky_g: int,
-                        zerosky_b: int,
-                        indent_level: int = 0,
-                        ) -> np.ndarray:
+def smooth_and_subtract(
+    in_img: np.ndarray,
+    skylevelfactor: float,
+    zerosky_r: int,
+    zerosky_g: int,
+    zerosky_b: int,
+    indent_level: int = 0,
+) -> np.ndarray:
     # Smooth the histogram so we can find the darkest sky level
     # to subtract and find the sky histogram peak, which should be
     # close to the darkest deep space zero level.
@@ -474,12 +486,12 @@ def smooth_and_subtract(in_img: np.ndarray,
 
     # The function `smooth_and_subtract` might be called insider other
     # functions where it would be appropriate to indent all output.
-    ni = '  ' * indent_level
+    ni = "  " * indent_level
 
-    print(f'{ni}- Computing smoothed RGB histograms on image.')
+    print(f"{ni}- Computing smoothed RGB histograms on image.")
     # Do two passes on finding sky level.
     for i in range(2):
-        print(f'{ni}  - Pass {i+1}')
+        print(f"{ni}  - Pass {i+1}")
 
         hist_r, _ = histogram(img, 0)
         hist_g, _ = histogram(img, 1)
@@ -504,23 +516,35 @@ def smooth_and_subtract(in_img: np.ndarray,
 
         # Now find the maximum values.
         # Limit the range in case of clipping or saturation.
-        hist_r_sm_argmax = np.argmax(hist_r_sm[400:65500+1]) + 400
-        hist_g_sm_argmax = np.argmax(hist_g_sm[400:65500+1]) + 400
-        hist_b_sm_argmax = np.argmax(hist_b_sm[400:65500+1]) + 400
+        hist_r_sm_argmax = np.argmax(hist_r_sm[400 : 65500 + 1]) + 400
+        hist_g_sm_argmax = np.argmax(hist_g_sm[400 : 65500 + 1]) + 400
+        hist_b_sm_argmax = np.argmax(hist_b_sm[400 : 65500 + 1]) + 400
 
-        print(f'{ni}    - Histogram peak.\n')
-        print(f'{ni}      Channel  Index      Value')
-        print(f'{ni}      -------------------------')
-        print('{}          Red  {:5d}  {:9.2f}'.format(
-            ni, hist_r_sm_argmax, hist_r_sm[hist_r_sm_argmax],
-        ))
-        print('{}        Green  {:5d}  {:9.2f}'.format(
-            ni, hist_g_sm_argmax, hist_g_sm[hist_g_sm_argmax],
-        ))
-        print('{}         Blue  {:5d}  {:9.2f}'.format(
-            ni, hist_b_sm_argmax, hist_b_sm[hist_b_sm_argmax],
-        ))
-        print('')
+        print(f"{ni}    - Histogram peak.\n")
+        print(f"{ni}      Channel  Index      Value")
+        print(f"{ni}      -------------------------")
+        print(
+            "{}          Red  {:5d}  {:9.2f}".format(
+                ni,
+                hist_r_sm_argmax,
+                hist_r_sm[hist_r_sm_argmax],
+            )
+        )
+        print(
+            "{}        Green  {:5d}  {:9.2f}".format(
+                ni,
+                hist_g_sm_argmax,
+                hist_g_sm[hist_g_sm_argmax],
+            )
+        )
+        print(
+            "{}         Blue  {:5d}  {:9.2f}".format(
+                ni,
+                hist_b_sm_argmax,
+                hist_b_sm[hist_b_sm_argmax],
+            )
+        )
+        print("")
 
         # Line 807
         # Now find the sky level on the left side of the histogram.
@@ -535,52 +559,67 @@ def smooth_and_subtract(in_img: np.ndarray,
         # Search from max towards left minimum, but search
         # for the green level in each color.
         for j in range(hist_r_sm_argmax, 0, -1):
-            if hist_r_sm[j] >= hist_g_sky and \
-                    hist_r_sm[j-1] <= hist_g_sky and \
-                    hist_r_sky_index == 0:
+            if (
+                hist_r_sm[j] >= hist_g_sky
+                and hist_r_sm[j - 1] <= hist_g_sky
+                and hist_r_sky_index == 0
+            ):
                 hist_r_sky_index = j
                 break
 
         for j in range(hist_g_sm_argmax, 0, -1):
-            if hist_g_sm[j] >= hist_g_sky and \
-                    hist_g_sm[j-1] <= hist_g_sky and \
-                    hist_g_sky_index == 0:
+            if (
+                hist_g_sm[j] >= hist_g_sky
+                and hist_g_sm[j - 1] <= hist_g_sky
+                and hist_g_sky_index == 0
+            ):
                 hist_g_sky_index = j
                 break
 
         for j in range(hist_b_sm_argmax, 0, -1):
-            if hist_b_sm[j] >= hist_g_sky and \
-                    hist_b_sm[j-1] <= hist_g_sky and \
-                    hist_b_sky_index == 0:
+            if (
+                hist_b_sm[j] >= hist_g_sky
+                and hist_b_sm[j - 1] <= hist_g_sky
+                and hist_b_sky_index == 0
+            ):
                 hist_b_sky_index = j
                 break
 
         # Line 843
-        if hist_r_sky_index == 0 or \
-                hist_g_sky_index == 0 or \
-                hist_b_sky_index == 0:
-            print(f'{ni}- Histogram sky level {skylevelfactor:.2f} not found.')
-            print('{}  Channels: Red={}, blue={}, green={}'.format(
-                ni, hist_r_sky_index, hist_g_sky_index, hist_b_sky_index,
-            ))
-            print('')
-            print(f'{ni}  Image is likely too dark. but you can try again')
-            print(f'{ni}  Suggestions:')
-            print(f'{ni}    - Add a --tone-curve.')
-            print(f'{ni}    - Reduce --s-curve intensity.')
-            print(f'{ni}    - Fewer --rootiter or smaller --rootpower2.')
-            print(f'{ni}  Exiting...')
+        if (
+            hist_r_sky_index == 0
+            or hist_g_sky_index == 0
+            or hist_b_sky_index == 0
+        ):
+            print(f"{ni}- Histogram sky level {skylevelfactor:.2f} not found.")
+            print(
+                "{}  Channels: Red={}, blue={}, green={}".format(
+                    ni,
+                    hist_r_sky_index,
+                    hist_g_sky_index,
+                    hist_b_sky_index,
+                )
+            )
+            print("")
+            print(f"{ni}  Image is likely too dark. but you can try again")
+            print(f"{ni}  Suggestions:")
+            print(f"{ni}    - Add a --tone-curve.")
+            print(f"{ni}    - Reduce --s-curve intensity.")
+            print(f"{ni}    - Fewer --rootiter or smaller --rootpower2.")
+            print(f"{ni}  Exiting...")
             sys.exit()
 
         # Line 882
-        print(f'{ni}    - Histogram dark sky level, '
-              f'{skylevelfactor*100:.2f}% of max.\n')
-        print(f'{ni}      Channel  Index     Value')
-        print(f'{ni}      ------------------------')
-        print(f'{ni}          Red  {hist_r_sky_index:5d} {hist_r_sky:9.2f}')
-        print(f'{ni}        Green  {hist_g_sky_index:5d} {hist_g_sky:9.2f}')
-        print(f'{ni}         Blue  {hist_b_sky_index:5d} {hist_b_sky:9.2f}')
-        print('')
+        print(
+            f"{ni}    - Histogram dark sky level, "
+            f"{skylevelfactor*100:.2f}% of max.\n"
+        )
+        print(f"{ni}      Channel  Index     Value")
+        print(f"{ni}      ------------------------")
+        print(f"{ni}          Red  {hist_r_sky_index:5d} {hist_r_sky:9.2f}")
+        print(f"{ni}        Green  {hist_g_sky_index:5d} {hist_g_sky:9.2f}")
+        print(f"{ni}         Blue  {hist_b_sky_index:5d} {hist_b_sky:9.2f}")
+        print("")
 
         # Line 924
         # Subtract value to bring sky channels equal to reference zero level.
@@ -588,13 +627,13 @@ def smooth_and_subtract(in_img: np.ndarray,
         hist_g_sky_sub = hist_g_sky_index - zerosky_g
         hist_b_sky_sub = hist_b_sky_index - zerosky_b
 
-        print(f'{ni}    - Subtracted channels to align sky reference.\n')
-        print(f'{ni}        Channel   Subtract     Ref')
-        print(f'{ni}        --------------------------')
-        print(f'{ni}            Red     {hist_r_sky_sub:6d}  {zerosky_r:6d}')
-        print(f'{ni}          Green     {hist_g_sky_sub:6d}  {zerosky_g:6d}')
-        print(f'{ni}           Blue     {hist_b_sky_sub:6d}  {zerosky_b:6d}')
-        print('')
+        print(f"{ni}    - Subtracted channels to align sky reference.\n")
+        print(f"{ni}        Channel   Subtract     Ref")
+        print(f"{ni}        --------------------------")
+        print(f"{ni}            Red     {hist_r_sky_sub:6d}  {zerosky_r:6d}")
+        print(f"{ni}          Green     {hist_g_sky_sub:6d}  {zerosky_g:6d}")
+        print(f"{ni}           Blue     {hist_b_sky_sub:6d}  {zerosky_b:6d}")
+        print("")
 
         rgb_sky_sub_r = hist_r_sky_index - zerosky_r
         rgb_sky_sub_g = hist_g_sky_index - zerosky_g
@@ -608,20 +647,21 @@ def smooth_and_subtract(in_img: np.ndarray,
         img[:, :, 2] = sub_func(img[:, :, 2], rgb_sky_sub_b)
         img[img < 0] = 0
 
-        print_ch_moments(img, 'Subtracted image.', indent=4)
-        print('')
+        print_ch_moments(img, "Subtracted image.", indent=4)
+        print("")
 
     return img
 
 
-def root_stretch(in_img: np.ndarray,
-                 rootpower: int,
-                 rootpower2: int,
-                 rootiter: int,
-                 ) -> np.ndarray:
+def root_stretch(
+    in_img: np.ndarray,
+    rootpower: int,
+    rootpower2: int,
+    rootiter: int,
+) -> np.ndarray:
     # Line 1088
     #
-    print('- Computing root stretch.')
+    print("- Computing root stretch.")
 
     # Make a copy of the input image.
     img = np.ones(in_img.shape) * in_img
@@ -635,7 +675,7 @@ def root_stretch(in_img: np.ndarray,
             # Exponent to power stretch for iteration 2.
             x = 1 / rootpower2
 
-        print(f'  - Iteration {i+1} of {rootiter}.')
+        print(f"  - Iteration {i+1} of {rootiter}.")
 
         b = img + 1.0
         b = b / 65536
@@ -646,13 +686,14 @@ def root_stretch(in_img: np.ndarray,
         b_min_z = max([b_min - 4095, 0])
 
         # Subtract the min, b_min_z, and rescale to max.
-        print(f'  - Subtracting {b_min_z:8.2f} from root stretched image.')
+        print(f"  - Subtracting {b_min_z:8.2f} from root stretched image.")
         b = b - b_min_z
         b = b / (65535 - b_min_z)
         img = 65535 * b
 
         print_ch_moments(
-            img, 'Image stats after root stretch and subtract.', 2)
+            img, "Image stats after root stretch and subtract.", 2
+        )
 
         # Sky level subtraction on root stretched image.
         # Line 1206.
@@ -668,19 +709,20 @@ def root_stretch(in_img: np.ndarray,
     return img
 
 
-def s_curve(in_img: np.ndarray,
-            scurve: int,
-            skylevelfactor: float,
-            zerosky_r: int,
-            zerosky_g: int,
-            zerosky_b: int,
-            ) -> np.ndarray:
-    print('- Computing s-curve stretch.')
+def s_curve(
+    in_img: np.ndarray,
+    scurve: int,
+    skylevelfactor: float,
+    zerosky_r: int,
+    zerosky_g: int,
+    zerosky_b: int,
+) -> np.ndarray:
+    print("- Computing s-curve stretch.")
     # Make a copy of the input image.
     img = np.ones(in_img.shape) * in_img
 
     for i in range(scurve):
-        if i+1 == 2 or i+1 == 4:
+        if i + 1 == 2 or i + 1 == 4:
             xfactor = 3
             # Note: This produces a crossover point (output = input) near 0.
             #       The image is brightened overall without much
@@ -694,20 +736,24 @@ def s_curve(in_img: np.ndarray,
             #       darker with higher contrast.
             xoffset = 0.42
 
-        scurvemin = xfactor \
-            / (1 + np.exp(-1 * ((0/65535 - xoffset) * xfactor))) \
-            - (1 - xoffset)  # = -0.0345159 when i=1
-        scurvemax = xfactor \
-            / (1 + np.exp(-1 * ((65535/65535 - xoffset) * xfactor))) \
-            - (1 - xoffset)  # = 4.15923 when i=1
+        scurvemin = xfactor / (
+            1 + np.exp(-1 * ((0 / 65535 - xoffset) * xfactor))
+        ) - (
+            1 - xoffset
+        )  # = -0.0345159 when i=1
+        scurvemax = xfactor / (
+            1 + np.exp(-1 * ((65535 / 65535 - xoffset) * xfactor))
+        ) - (
+            1 - xoffset
+        )  # = 4.15923 when i=1
         scurveminsc = scurvemin / scurvemax  # = -0.00829863 when i==1
 
-        print(f'  - S-curve pass {i+1}')
-        print(f'    xfactor     = {xfactor:4.2f}')
-        print(f'    xoffset     = {xoffset:4.2f}')
-        print(f'    scurvemin   = {scurvemin:4.2f}')
-        print(f'    scurvemax   = {scurvemax:4.2f}')
-        print(f'    scurveminsc = {scurveminsc:4.2f}')
+        print(f"  - S-curve pass {i+1}")
+        print(f"    xfactor     = {xfactor:4.2f}")
+        print(f"    xoffset     = {xoffset:4.2f}")
+        print(f"    scurvemin   = {scurvemin:4.2f}")
+        print(f"    scurvemax   = {scurvemax:4.2f}")
+        print(f"    scurveminsc = {scurveminsc:4.2f}")
 
         xo = 1 - xoffset
         sc = img / 65535
@@ -728,9 +774,9 @@ def s_curve(in_img: np.ndarray,
         sc = 65535 * sc
         img = sc / (1 - scurveminsc)
 
-        print_ch_moments(img, f'Image stats after s-curve, pass {i+1}.', 2)
+        print_ch_moments(img, f"Image stats after s-curve, pass {i+1}.", 2)
 
-    print('\n- Subtracting sky offset from s-curve stretched image.')
+    print("\n- Subtracting sky offset from s-curve stretched image.")
     img_subtracted = smooth_and_subtract(
         img,
         skylevelfactor,
@@ -742,19 +788,20 @@ def s_curve(in_img: np.ndarray,
     return img_subtracted
 
 
-def setmin(in_img: np.ndarray,
-           setmin_r: int,
-           setmin_g: int,
-           setmin_b: int,
-           ) -> np.ndarray:
+def setmin(
+    in_img: np.ndarray,
+    setmin_r: int,
+    setmin_g: int,
+    setmin_b: int,
+) -> np.ndarray:
     # This makes sure there are no really dark pixels, which typically happens
     # from noise or color matrix application (in the raw converter) around
     # stars showing chromatic aberration.
-    print('- Applying set minimum.')
-    print('  Minimum RGB levels on output:')
-    print(f'    Red:   {setmin_r}')
-    print(f'    Green: {setmin_g}')
-    print(f'    Blue:  {setmin_b}')
+    print("- Applying set minimum.")
+    print("  Minimum RGB levels on output:")
+    print(f"    Red:   {setmin_r}")
+    print(f"    Green: {setmin_g}")
+    print(f"    Blue:  {setmin_b}")
 
     # Make a copy of the input image.
     img = np.ones(in_img.shape) * in_img
@@ -773,26 +820,28 @@ def setmin(in_img: np.ndarray,
     return img
 
 
-def color_correct(in_img: np.ndarray,
-                  in_img_original: np.ndarray,
-                  colorenhance: float,
-                  zerosky_r: int,
-                  zerosky_g: int,
-                  zerosky_b: int,
-                  shape_x: int,
-                  shape_y: int,
-                  ):
+def color_correct(
+    in_img: np.ndarray,
+    in_img_original: np.ndarray,
+    colorenhance: float,
+    zerosky_r: int,
+    zerosky_g: int,
+    zerosky_b: int,
+    shape_x: int,
+    shape_y: int,
+):
     # Make a copy of input image.
     img = np.ones(in_img.shape) * in_img.astype(np.float64)
-    img_original = np.ones(in_img_original.shape) \
-        * in_img_original.astype(np.float64)
+    img_original = np.ones(in_img_original.shape) * in_img_original.astype(
+        np.float64
+    )
 
     # Sky level subtracted to get the real zero point.
     img_original[:, :, 0] -= zerosky_r
     img_original[:, :, 1] -= zerosky_g
     img_original[:, :, 2] -= zerosky_b
 
-    print('- Computing image ratios for color analysis.')
+    print("- Computing image ratios for color analysis.")
 
     # Ratios of `img_original` indicate the original color.
     # The `img` ratios are the root stretched color.
@@ -812,30 +861,36 @@ def color_correct(in_img: np.ndarray,
     img[img < 10] = 10
 
     # Green / Red ratio.
-    gr = (img_original[:, :, 1] / img_original[:, :, 0]) \
-        / (img[:, :, 1] / img[:, :, 0])
+    gr = (img_original[:, :, 1] / img_original[:, :, 0]) / (
+        img[:, :, 1] / img[:, :, 0]
+    )
 
     # Blue / Red ratio.
-    br = (img_original[:, :, 2] / img_original[:, :, 0]) \
-        / (img[:, :, 2] / img[:, :, 0])
+    br = (img_original[:, :, 2] / img_original[:, :, 0]) / (
+        img[:, :, 2] / img[:, :, 0]
+    )
 
     # Red / Green ratio.
-    rg = (img_original[:, :, 0] / img_original[:, :, 1]) \
-        / (img[:, :, 0] / img[:, :, 1])
+    rg = (img_original[:, :, 0] / img_original[:, :, 1]) / (
+        img[:, :, 0] / img[:, :, 1]
+    )
 
     # Blue / Green ratio.
-    bg = (img_original[:, :, 2] / img_original[:, :, 1]) \
-        / (img[:, :, 2] / img[:, :, 1])
+    bg = (img_original[:, :, 2] / img_original[:, :, 1]) / (
+        img[:, :, 2] / img[:, :, 1]
+    )
 
     # Green / Blue ratio.
-    gb = (img_original[:, :, 1] / img_original[:, :, 2]) \
-        / (img[:, :, 1] / img[:, :, 2])
+    gb = (img_original[:, :, 1] / img_original[:, :, 2]) / (
+        img[:, :, 1] / img[:, :, 2]
+    )
 
     # Red / Blue ratio.
-    rb = (img_original[:, :, 0] / img_original[:, :, 2]) \
-        / (img[:, :, 0] / img[:, :, 2])
+    rb = (img_original[:, :, 0] / img_original[:, :, 2]) / (
+        img[:, :, 0] / img[:, :, 2]
+    )
 
-    print('  - Setting limits for color correction.')
+    print("  - Setting limits for color correction.")
 
     # Note: Numbers > 1 desaturate.
     zmin = 0.2
@@ -863,29 +918,56 @@ def color_correct(in_img: np.ndarray,
     #
     # Only make color adjustment at the upper end and
     # proportionally less correction at lower intensities.
-    print('  - Color ratio images after limit set {:.2f} to {:.2f}'.format(
-        zmin, zmax,
-    ))
-    print('    - Green / Red:   min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(gr), np.max(gr), np.mean(gr),
-    ))
-    print('    - Blue  / Red:   min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(br), np.max(br), np.mean(br),
-    ))
-    print('    - Red   / Green: min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(rg), np.max(rg), np.mean(rg),
-    ))
-    print('    - Blue  / Green: min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(bg), np.max(bg), np.mean(bg),
-    ))
-    print('    - Green / Blue:  min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(gb), np.max(gb), np.mean(gb),
-    ))
-    print('    - Red   / Blue:  min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(rb), np.max(rb), np.mean(rb),
-    ))
+    print(
+        "  - Color ratio images after limit set {:.2f} to {:.2f}".format(
+            zmin,
+            zmax,
+        )
+    )
+    print(
+        "    - Green / Red:   min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(gr),
+            np.max(gr),
+            np.mean(gr),
+        )
+    )
+    print(
+        "    - Blue  / Red:   min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(br),
+            np.max(br),
+            np.mean(br),
+        )
+    )
+    print(
+        "    - Red   / Green: min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(rg),
+            np.max(rg),
+            np.mean(rg),
+        )
+    )
+    print(
+        "    - Blue  / Green: min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(bg),
+            np.max(bg),
+            np.mean(bg),
+        )
+    )
+    print(
+        "    - Green / Blue:  min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(gb),
+            np.max(gb),
+            np.mean(gb),
+        )
+    )
+    print(
+        "    - Red   / Blue:  min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(rb),
+            np.max(rb),
+            np.mean(rb),
+        )
+    )
 
-    print('  - Computing intensity independent color correction.')
+    print("  - Computing intensity independent color correction.")
     cavgn = ((img[:, :, 0] + img[:, :, 1] + img[:, :, 2]) / 3) / 65535
     cavgn[cavgn < 0] = 0
 
@@ -904,16 +986,18 @@ def color_correct(in_img: np.ndarray,
     # correction to cavgn < 1. Note, this is subjective to
     # produce pleasing colors. You can effectively change all
     # this on the command line with the -colorenhance flag.
-    cavgn = cavgn ** 0.2
+    cavgn = cavgn**0.2
 
     # Prevent low level from completely being lost.
     cavgn = (cavgn + 0.3) / (1.0 + 0.3)
 
     # Line 2080
     print(
-        '  - Color correction intensity range factor.\n'
-        '    Image stats: min={:.2f}, max={:.2f}, mean={:.2f}.'.format(
-            np.min(cavgn), np.max(cavgn), np.mean(cavgn),
+        "  - Color correction intensity range factor.\n"
+        "    Image stats: min={:.2f}, max={:.2f}, mean={:.2f}.".format(
+            np.min(cavgn),
+            np.max(cavgn),
+            np.mean(cavgn),
         )
     )
 
@@ -927,9 +1011,11 @@ def color_correct(in_img: np.ndarray,
     cfe = cfactor * colorenhance * cavgn
 
     print(
-        '  - Color correction cfe range factor.\n'
-        '    Image stats: min={:.2f}, max={:.2f}, mean={:.2f}.'.format(
-            np.min(cfe), np.max(cfe), np.mean(cfe),
+        "  - Color correction cfe range factor.\n"
+        "    Image stats: min={:.2f}, max={:.2f}, mean={:.2f}.".format(
+            np.min(cfe),
+            np.max(cfe),
+            np.mean(cfe),
         )
     )
 
@@ -940,27 +1026,51 @@ def color_correct(in_img: np.ndarray,
     gb = 1 + (cfe * (gb - 1))
     rb = 1 + (cfe * (rb - 1))
 
-    print('  - Color ratio images after factors applied.')
-    print('    - Green / Red:   min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(gr), np.max(gr), np.mean(gr),
-    ))
-    print('    - Blue  / Red:   min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(br), np.max(br), np.mean(br),
-    ))
-    print('    - Red   / Green: min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(rg), np.max(rg), np.mean(rg),
-    ))
-    print('    - Blue  / Green: min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(bg), np.max(bg), np.mean(bg),
-    ))
-    print('    - Green / Blue:  min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(gb), np.max(gb), np.mean(gb),
-    ))
-    print('    - Red   / Blue:  min={:.3f}, max={:.3f}, mean={:.3f}'.format(
-        np.min(rb), np.max(rb), np.mean(rb),
-    ))
+    print("  - Color ratio images after factors applied.")
+    print(
+        "    - Green / Red:   min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(gr),
+            np.max(gr),
+            np.mean(gr),
+        )
+    )
+    print(
+        "    - Blue  / Red:   min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(br),
+            np.max(br),
+            np.mean(br),
+        )
+    )
+    print(
+        "    - Red   / Green: min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(rg),
+            np.max(rg),
+            np.mean(rg),
+        )
+    )
+    print(
+        "    - Blue  / Green: min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(bg),
+            np.max(bg),
+            np.mean(bg),
+        )
+    )
+    print(
+        "    - Green / Blue:  min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(gb),
+            np.max(gb),
+            np.mean(gb),
+        )
+    )
+    print(
+        "    - Red   / Blue:  min={:.3f}, max={:.3f}, mean={:.3f}".format(
+            np.min(rb),
+            np.max(rb),
+            np.mean(rb),
+        )
+    )
 
-    print('  - Computing 6 intermediate image sets for color correction.')
+    print("  - Computing 6 intermediate image sets for color correction.")
     # These 6 images are computed to speed calculations below.
     c2gr = img[:, :, 1] * gr  # green adjusted
     c3br = img[:, :, 2] * br  # blue adjusted
@@ -972,7 +1082,7 @@ def color_correct(in_img: np.ndarray,
     c2gb = img[:, :, 1] * gb  # green adjusted
 
     # Line 2147
-    print('  - Starting signal-dependent color recovery.')
+    print("  - Starting signal-dependent color recovery.")
     nlines = 1000
     if shape_y < 2000:
         nlines = 500
@@ -985,9 +1095,9 @@ def color_correct(in_img: np.ndarray,
     pxmid = shape_x // 2
 
     for iy in range(shape_y):
-        ilinex = (iy-1)/nlines - (int((iy-1)/int(nlines)))
+        ilinex = (iy - 1) / nlines - (int((iy - 1) / int(nlines)))
         if abs(ilinex) < 0.00001:
-            print(f'    Starting line {iy:4d} of {shape_y}.')
+            print(f"    Starting line {iy:4d} of {shape_y}.")
 
         for ix in range(shape_x):
             # Default: Red is max.
@@ -1018,20 +1128,24 @@ def color_correct(in_img: np.ndarray,
                 img[ix, iy, 1] = c2gb[ix, iy]  # green adjusted
 
         if abs(ilinex) < 0.00001:
-            print('    - line {:6d} orig-sky  RGB: {:6d} {:6d} {:6d}'.format(
-                iy,
-                int(img_original[pxmid, iy, 0]),
-                int(img_original[pxmid, iy, 1]),
-                int(img_original[pxmid, iy, 2]),
-            ))
-            print('    - line {:6d} corrected RGB: {:6d} {:6d} {:6d}'.format(
-                iy,
-                int(img[pxmid, iy, 0]),
-                int(img[pxmid, iy, 1]),
-                int(img[pxmid, iy, 2]),
-            ))
+            print(
+                "    - line {:6d} orig-sky  RGB: {:6d} {:6d} {:6d}".format(
+                    iy,
+                    int(img_original[pxmid, iy, 0]),
+                    int(img_original[pxmid, iy, 1]),
+                    int(img_original[pxmid, iy, 2]),
+                )
+            )
+            print(
+                "    - line {:6d} corrected RGB: {:6d} {:6d} {:6d}".format(
+                    iy,
+                    int(img[pxmid, iy, 0]),
+                    int(img[pxmid, iy, 1]),
+                    int(img[pxmid, iy, 2]),
+                )
+            )
 
-    print('  - Color recovery complete.')
+    print("  - Color recovery complete.")
 
     return img
 
@@ -1043,10 +1157,14 @@ def post_process(img: np.ndarray) -> np.ndarray:
     # Re-swap axes to get original shape.
     img = np.swapaxes(img, 0, 1)
 
-    print('- output image dimensions: {:d} {:d} {:d}'.format(
-        img.shape[0], img.shape[1], img.shape[2],
-    ))
-    print_ch_moments(img, 'Output image.')
+    print(
+        "- output image dimensions: {:d} {:d} {:d}".format(
+            img.shape[0],
+            img.shape[1],
+            img.shape[2],
+        )
+    )
+    print_ch_moments(img, "Output image.")
 
     return img
 
@@ -1084,13 +1202,13 @@ def main(args: argparse.Namespace) -> None:
     img = format_and_scale(img)
 
     # Print input image moments.
-    print_ch_moments(img, 'Input image moments:')
+    print_ch_moments(img, "Input image moments:")
 
     # Apply a tone curve to the image.
     # Line 557.
     if args.tone_curve:
         img = tone_curve(img)
-        imshow(img, '01-tone-curve', args)
+        imshow(img, "01-tone-curve", args)
 
     # Subtract darkest sky level from smoothed histogram.
     # Line 697.
@@ -1101,7 +1219,7 @@ def main(args: argparse.Namespace) -> None:
         zerosky_g=args.zerosky_green,
         zerosky_b=args.zerosky_blue,
     )
-    imshow(img, '02-sky-subtraction', args)
+    imshow(img, "02-sky-subtraction", args)
 
     # Make a copy of the subtracted image.
     # This will be needed in the later color correction step.
@@ -1115,7 +1233,7 @@ def main(args: argparse.Namespace) -> None:
         rootpower2=args.rootpower2,
         rootiter=args.rootiter,
     )
-    imshow(img, '03-root-stretch', args)
+    imshow(img, "03-root-stretch", args)
 
     # Apply a s-curve to improve contrast.
     # Line 1529.
@@ -1128,7 +1246,7 @@ def main(args: argparse.Namespace) -> None:
             zerosky_g=args.zerosky_green,
             zerosky_b=args.zerosky_blue,
         )
-        imshow(img, '04-s-curve', args)
+        imshow(img, "04-s-curve", args)
 
     # Remove really dark pixels by adjusting for minimum.
     # Line 1919.
@@ -1139,7 +1257,7 @@ def main(args: argparse.Namespace) -> None:
             args.setmin_green,
             args.setmin_blue,
         )
-        imshow(img, '05-setmin-01', args)
+        imshow(img, "05-setmin-01", args)
 
     # Perform color correction on the output image.
     # Line 1951.
@@ -1154,7 +1272,7 @@ def main(args: argparse.Namespace) -> None:
             shape_x=img.shape[0],
             shape_y=img.shape[1],
         )
-        imshow(img, '06-color-correction', args)
+        imshow(img, "06-color-correction", args)
 
     # Remove really dark pixels (again) by adjusting for minimum.
     # Line 2263.
@@ -1165,17 +1283,17 @@ def main(args: argparse.Namespace) -> None:
             args.setmin_green,
             args.setmin_blue,
         )
-        imshow(img, '07-setmin-02', args)
+        imshow(img, "07-setmin-02", args)
 
     # Perform some post-processing on the final image.
     # Line 2688.
     img = post_process(img)
-    imshow(img, '08-post-processing', args, flip=False)
+    imshow(img, "08-post-processing", args, flip=False)
 
     # Write output image to file.
-    imwrite(img, os.path.join(args.output_dir, 'stretched.tif'))
+    imwrite(img, os.path.join(args.output_dir, "stretched.tif"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = parse_sysargs()
     main(args)
