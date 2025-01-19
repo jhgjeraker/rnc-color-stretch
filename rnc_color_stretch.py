@@ -43,6 +43,29 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
+PROGVERSION = 1.02
+
+
+def print_header() -> None:
+    print("\n")
+    print("rnc-color-stretch  GNU General Public License\n\n")
+
+    print(
+        "              Copyright (c) 2016-2021, Roger N. Clark, http://www.clarkvision.com\n"
+    )
+    print("              All rights reserved. \n")
+    print("                              https://www.gnu.org/licenses/gpl.html\n")
+    print("                              No warranty for this free software\n")
+    print(
+        "              http://www.clarkvision.com/articles/astrophotography.software/\n"
+    )
+    print("              Full license is in the source code.\n")
+
+    print("\n")
+    print("\n version ", PROGVERSION)
+    print("\n")
+    print("\n")
+
 
 def parse_sysargs() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -177,26 +200,27 @@ def parse_sysargs() -> argparse.Namespace:
 
     args = parser.parse_args()
 
-    print("- All parameters:")
-    print(f"  Input file:       {args.image}")
-    print(f"  Output directory: {args.output_dir}/")
-    print(f"  Plot:             {args.plot}")
-    print(f"  Write Plot:       {args.write_plot}")
-    print(f"  Tone Curve:       {args.tone_curve}")
-    print(f"  S-Curve:          {args.s_curve}")
-    print(f"  Skylevelfactor:   {args.skylevelfactor}")
-    print(f"  Zerosky Red:      {args.zerosky_red}")
-    print(f"  Zerosky Green:    {args.zerosky_green}")
-    print(f"  Zerosky Blue:     {args.zerosky_blue}")
-    print(f"  Rootpower:        {args.rootpower}")
-    print(f"  Rootpower2:       {args.rootpower2}")
-    print(f"  Rootiter:         {args.rootiter}")
-    print(f"  Setmin:           {args.setmin}")
-    print(f"  Setmin Red:       {args.setmin_red}")
-    print(f"  Setmin Green:     {args.setmin_green}")
-    print(f"  Setmin Blue:      {args.setmin_blue}")
-    print(f"  Colorcorrect:     {not args.no_colorcorrection}")
-    print(f"  Colorenchance:    {args.colorenhance}")
+    print("All parameters:")
+    print(f"   Input file name:       {args.image}")
+    print(f"   Output base file name: {args.image}")
+    print(f"   Output directory:      {args.output_dir}/")
+    print(f"   Plot:                  {args.plot}")
+    print(f"   Write Plot:            {args.write_plot}")
+    print(f"   Tone Curve:            {args.tone_curve}")
+    print(f"   S-Curve:               {args.s_curve}")
+    print(f"   Skylevelfactor:        {args.skylevelfactor}")
+    print(f"   Zerosky Red:           {args.zerosky_red}")
+    print(f"   Zerosky Green:         {args.zerosky_green}")
+    print(f"   Zerosky Blue:          {args.zerosky_blue}")
+    print(f"   Rootpower:             {args.rootpower}")
+    print(f"   Rootpower2:            {args.rootpower2}")
+    print(f"   Rootiter:              {args.rootiter}")
+    print(f"   Setmin:                {args.setmin}")
+    print(f"   Setmin Red:            {args.setmin_red}")
+    print(f"   Setmin Green:          {args.setmin_green}")
+    print(f"   Setmin Blue:           {args.setmin_blue}")
+    print(f"   Colorcorrect:          {not args.no_colorcorrection}")
+    print(f"   Colorenchance:         {args.colorenhance}")
 
     return args
 
@@ -289,9 +313,9 @@ def print_ch_moments(img: np.ndarray, header: str, indent: int = 0) -> None:
 
     """
 
-    print(f'{indent*" "}- {header}\n')
-    print(f'{indent*" "}  Channel       Min        Max       Mean')
-    print(f'{indent*" "}  ---------------------------------------')
+    print(f"{indent * ' '}- {header}\n")
+    print(f"{indent * ' '}  Channel       Min        Max       Mean")
+    print(f"{indent * ' '}  ---------------------------------------")
     for ch, color in enumerate(["Red", "Green", "Blue"]):
         print(
             "{}  {:6s}  {:9.2f}  {:9.2f}  {:9.2f}".format(
@@ -491,7 +515,7 @@ def smooth_and_subtract(
     print(f"{ni}- Computing smoothed RGB histograms on image.")
     # Do two passes on finding sky level.
     for i in range(2):
-        print(f"{ni}  - Pass {i+1}")
+        print(f"{ni}  - Pass {i + 1}")
 
         hist_r, _ = histogram(img, 0)
         hist_g, _ = histogram(img, 1)
@@ -586,11 +610,7 @@ def smooth_and_subtract(
                 break
 
         # Line 843
-        if (
-            hist_r_sky_index == 0
-            or hist_g_sky_index == 0
-            or hist_b_sky_index == 0
-        ):
+        if hist_r_sky_index == 0 or hist_g_sky_index == 0 or hist_b_sky_index == 0:
             print(f"{ni}- Histogram sky level {skylevelfactor:.2f} not found.")
             print(
                 "{}  Channels: Red={}, blue={}, green={}".format(
@@ -611,8 +631,7 @@ def smooth_and_subtract(
 
         # Line 882
         print(
-            f"{ni}    - Histogram dark sky level, "
-            f"{skylevelfactor*100:.2f}% of max.\n"
+            f"{ni}    - Histogram dark sky level, {skylevelfactor * 100:.2f}% of max.\n"
         )
         print(f"{ni}      Channel  Index     Value")
         print(f"{ni}      ------------------------")
@@ -675,7 +694,7 @@ def root_stretch(
             # Exponent to power stretch for iteration 2.
             x = 1 / rootpower2
 
-        print(f"  - Iteration {i+1} of {rootiter}.")
+        print(f"  - Iteration {i + 1} of {rootiter}.")
 
         b = img + 1.0
         b = b / 65536
@@ -691,9 +710,7 @@ def root_stretch(
         b = b / (65535 - b_min_z)
         img = 65535 * b
 
-        print_ch_moments(
-            img, "Image stats after root stretch and subtract.", 2
-        )
+        print_ch_moments(img, "Image stats after root stretch and subtract.", 2)
 
         # Sky level subtraction on root stretched image.
         # Line 1206.
@@ -736,19 +753,15 @@ def s_curve(
             #       darker with higher contrast.
             xoffset = 0.42
 
-        scurvemin = xfactor / (
-            1 + np.exp(-1 * ((0 / 65535 - xoffset) * xfactor))
-        ) - (
+        scurvemin = xfactor / (1 + np.exp(-1 * ((0 / 65535 - xoffset) * xfactor))) - (
             1 - xoffset
         )  # = -0.0345159 when i=1
         scurvemax = xfactor / (
             1 + np.exp(-1 * ((65535 / 65535 - xoffset) * xfactor))
-        ) - (
-            1 - xoffset
-        )  # = 4.15923 when i=1
+        ) - (1 - xoffset)  # = 4.15923 when i=1
         scurveminsc = scurvemin / scurvemax  # = -0.00829863 when i==1
 
-        print(f"  - S-curve pass {i+1}")
+        print(f"  - S-curve pass {i + 1}")
         print(f"    xfactor     = {xfactor:4.2f}")
         print(f"    xoffset     = {xoffset:4.2f}")
         print(f"    scurvemin   = {scurvemin:4.2f}")
@@ -774,7 +787,7 @@ def s_curve(
         sc = 65535 * sc
         img = sc / (1 - scurveminsc)
 
-        print_ch_moments(img, f"Image stats after s-curve, pass {i+1}.", 2)
+        print_ch_moments(img, f"Image stats after s-curve, pass {i + 1}.", 2)
 
     print("\n- Subtracting sky offset from s-curve stretched image.")
     img_subtracted = smooth_and_subtract(
@@ -832,9 +845,7 @@ def color_correct(
 ):
     # Make a copy of input image.
     img = np.ones(in_img.shape) * in_img.astype(np.float64)
-    img_original = np.ones(in_img_original.shape) * in_img_original.astype(
-        np.float64
-    )
+    img_original = np.ones(in_img_original.shape) * in_img_original.astype(np.float64)
 
     # Sky level subtracted to get the real zero point.
     img_original[:, :, 0] -= zerosky_r
@@ -861,34 +872,22 @@ def color_correct(
     img[img < 10] = 10
 
     # Green / Red ratio.
-    gr = (img_original[:, :, 1] / img_original[:, :, 0]) / (
-        img[:, :, 1] / img[:, :, 0]
-    )
+    gr = (img_original[:, :, 1] / img_original[:, :, 0]) / (img[:, :, 1] / img[:, :, 0])
 
     # Blue / Red ratio.
-    br = (img_original[:, :, 2] / img_original[:, :, 0]) / (
-        img[:, :, 2] / img[:, :, 0]
-    )
+    br = (img_original[:, :, 2] / img_original[:, :, 0]) / (img[:, :, 2] / img[:, :, 0])
 
     # Red / Green ratio.
-    rg = (img_original[:, :, 0] / img_original[:, :, 1]) / (
-        img[:, :, 0] / img[:, :, 1]
-    )
+    rg = (img_original[:, :, 0] / img_original[:, :, 1]) / (img[:, :, 0] / img[:, :, 1])
 
     # Blue / Green ratio.
-    bg = (img_original[:, :, 2] / img_original[:, :, 1]) / (
-        img[:, :, 2] / img[:, :, 1]
-    )
+    bg = (img_original[:, :, 2] / img_original[:, :, 1]) / (img[:, :, 2] / img[:, :, 1])
 
     # Green / Blue ratio.
-    gb = (img_original[:, :, 1] / img_original[:, :, 2]) / (
-        img[:, :, 1] / img[:, :, 2]
-    )
+    gb = (img_original[:, :, 1] / img_original[:, :, 2]) / (img[:, :, 1] / img[:, :, 2])
 
     # Red / Blue ratio.
-    rb = (img_original[:, :, 0] / img_original[:, :, 2]) / (
-        img[:, :, 0] / img[:, :, 2]
-    )
+    rb = (img_original[:, :, 0] / img_original[:, :, 2]) / (img[:, :, 0] / img[:, :, 2])
 
     print("  - Setting limits for color correction.")
 
